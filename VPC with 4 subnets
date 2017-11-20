@@ -143,6 +143,27 @@ Resources:
   				Ref: VPCBase  
   			
 			
+  IGWBase:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-IGW"
+
+
+  VGAIGWBase:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId:
+        Ref: IGWBase
+      VpcId:
+        Ref: VPCBase
+
+
 			
 			
 			
