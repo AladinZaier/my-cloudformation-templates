@@ -162,6 +162,20 @@ Resources:
         Ref: IGWBase
       VpcId:
         Ref: VPCBase
+	
+	
+  RouteTablePublic
+      Type: AWS::EC2::RouteTable
+      Properties: 
+        VpcId: Ref:VPCBase
+        Tags:
+          - Key: Name
+            Value: 
+              Fn::Join:
+                - ''
+                - - Ref:AWS::StackName
+                  - "-Public RouteTable"
+    
 
 
 			
