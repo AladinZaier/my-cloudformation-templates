@@ -176,6 +176,18 @@ Resources:
                 - - Ref:AWS::StackName
                   - "-Public RouteTable "
     
+  RouteTablePrivateAZ1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Ref: VPCBase
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Join:
+          - ''
+          - - Ref: AWS::StackName
+            - "-PrivateAZ1RT"
 
 
 			
