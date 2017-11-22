@@ -1,0 +1,44 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Template fait par Alaeddine Zaier : Création de site wordpress - seniorhome",
+    "Parameters": {
+        "VPCID": {
+            "Type": "AWS::EC2::VPC::Id",
+            "Description": "Veuillez sélectioner un VPC pour votre site web wordpress"
+        },
+        "ELBSubnet": {
+            "Type": "List<AWS::EC2::ELBSubnet::Id>",
+            "Description": "Veuillez selectionner les subnets pour votre ELB"
+        },
+        "PrivateSubnets": {
+            "Type": "List<AWS::EC2::subnets::Id>",
+            "Description": "Veuillez ajouter des subnets privés pour vos instance EC2 ainsi que votre DB"
+        },
+        "InstanceType": {
+            "Type": "String",
+            "Description": "Veuillez choisir un type de instances pour votre machines EC2",
+            "Default": "t2.micro",
+            "AllowedValues": [
+                "t2.micro"
+            ],
+            "ConstraintDescription": "Un correct type de instance EC2 est obligatoire"
+        },
+        "SSHLocation": {
+            "Type": "String",
+            "Description": "Veuillez rentrer la plage des adresses IP qui peuvent se connecter",
+            "MinLength": "9",
+            "MaxLength": "18",
+            "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
+            "ConstraintDescription": "L'adresse IP doit etre au format x.x.x.x/x"
+        },
+        "DBClass": {
+            "Description": "Veuillez choisir le type d'instance de votre DB",
+            "Type": "String",
+            "Default": "t2.micro",
+            "AllowedValues": [
+                "db.t2.micro"
+            ],
+            "ConstraintDescription": "Le type d'instance doit etre un type valide"
+        }
+    }
+}
