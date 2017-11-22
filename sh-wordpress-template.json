@@ -39,6 +39,24 @@
                 "db.t2.micro"
             ],
             "ConstraintDescription": "Le type d'instance doit etre un type valide"
+        },
+        "DBName":{
+            "Description":"Veuillez saisir le nom de la base de donées",
+            "Type":"String",
+            "Default":"wordpressdb",
+            "MinLength":"1",
+            "MaxLength":"64",
+            "AllowedPattern":"[a-zA-Z][a-zA-Z0-9]*",
+            "ConstraintDescription":"Le DBName doit commencer par une lettre et etre du type alphanumérique"
+        },
+        "DBUser": {
+            "NoEcho":"true",
+            "Description":"Veuillez saisir le nom de l'utilisateur de la DB",
+            "Type":"String",
+            "MinLength":"1",
+            "MaxLength":"16",
+            "AllowedPattern":"[a-zA-Z][a-zA-Z0-9]*",
+            "ConstraintDescription":"Le DBUser doit commencer par une lettre et etre du type alphanumérique"
         }
     }
 }
