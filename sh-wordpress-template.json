@@ -93,5 +93,17 @@
             "MaxValue": "1024",
             "ConstraintDescription": "must be between 5 and 1024Gb."
         }
+    },
+    "Mappings":{
+        "AWSInstanceType2Arch" : {
+        "t2.micro" : { "Arch" : "HVM64"  }
+    },
+    "AWSRegionArch2AMI" : {
+      "us-east-1"        : { "HVM64" : "ami-f5f41398" },
+      "us-west-2"        : { "HVM64" : "ami-d0f506b0" },
+      "us-west-1"        : { "HVM64" : "ami-6e84fa0e" },
+      "eu-west-1"        : { "HVM64" : "ami-b0ac25c3" },
+      "eu-central-1"     : { "HVM64" : "ami-bf2ba8d0" }    
+    }
     }
 }
