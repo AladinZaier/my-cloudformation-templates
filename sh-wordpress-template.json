@@ -34,7 +34,7 @@
         "DBClass": {
             "Description": "Veuillez choisir le type d'instance de votre DB",
             "Type": "String",
-            "Default": "t2.micro",
+            "Default": "db.t2.micro",
             "AllowedValues": [
                 "db.t2.micro"
             ],
