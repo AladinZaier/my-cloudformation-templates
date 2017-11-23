@@ -94,16 +94,65 @@
             "ConstraintDescription": "must be between 5 and 1024Gb."
         }
     },
-    "Mappings":{
-        "AWSInstanceType2Arch" : {
-        "t2.micro" : { "Arch" : "HVM64"  }
+    "Mappings": {
+        "AWSInstanceType2Arch": {
+            "t2.micro": {
+                "Arch": "HVM64"
+            }
+        },
+        "AWSRegionArch2AMI": {
+            "us-east-1": {
+                "HVM64": "ami-f5f41398"
+            },
+            "us-west-2": {
+                "HVM64": "ami-d0f506b0"
+            },
+            "us-west-1": {
+                "HVM64": "ami-6e84fa0e"
+            },
+            "eu-west-1": {
+                "HVM64": "ami-b0ac25c3"
+            },
+            "eu-central-1": {
+                "HVM64": "ami-bf2ba8d0"
+            }
+        }
     },
-    "AWSRegionArch2AMI" : {
-      "us-east-1"        : { "HVM64" : "ami-f5f41398" },
-      "us-west-2"        : { "HVM64" : "ami-d0f506b0" },
-      "us-west-1"        : { "HVM64" : "ami-6e84fa0e" },
-      "eu-west-1"        : { "HVM64" : "ami-b0ac25c3" },
-      "eu-central-1"     : { "HVM64" : "ami-bf2ba8d0" }    
-    }
+    "Resources": {
+        "ElasticLoadBalancer": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "Subnets": {
+                    "Ref": "ELBSubnet"
+                },
+                "CrossZone": "True",
+                "SecurityGroups": {
+                    "Ref": "ELBSecurityGroup"
+                },
+                "LBCookieStickinessPolicy": [
+                    {
+                        "PolicyName": "CookieBasedPolicy",
+                        "CookieExpirationPeriod": "30"
+                    }
+                ],
+                "Listeners": [
+                    {
+                        "LoadBalancerPort": "80",
+                        "InstancePort": "80",
+                        "InstanceProtocol": "HTTP",
+                        "PolicyNames": [
+                            "CookieBasedPolicy"
+                        ]
+                    }
+                ],
+                "HealthCheck": {
+                    "HealthyThreshold": "2",
+                    "Interval": "10",
+                    "Target": "HTTP:80/wordpress/wp-admin/install.php",
+                    "Timeout": "5",
+                    "UnhealthyThreshold": "5"
+                }
+            }
+        }
     }
 }
