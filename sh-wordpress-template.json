@@ -241,5 +241,11 @@
                 "VPCSecurityGroups" :{ "Ref" : "DBEC2SecurityGroup" }
             }
         }
+    },
+    "Outputs" : {
+        "webSiteURL" : {
+            "Value" : {"Fn::Join" : ["",["http://", {"Fn::GetAtt" : [ "ElasticLoadBalancer", "DNSName" ] }, "/wordpress" ]]},
+            "Description" : "Votre site web wordpress"   
+        }
     }
 }
