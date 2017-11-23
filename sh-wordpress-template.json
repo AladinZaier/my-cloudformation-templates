@@ -151,7 +151,55 @@
                     "Target": "HTTP:80/wordpress/wp-admin/install.php",
                     "Timeout": "5",
                     "UnhealthyThreshold": "5"
-                }
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "AWS::StackName"
+                                    },
+                                    "-ELB"
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "ELBSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "FromPort": "80",
+                        "ToPort": "80",
+                        "IpProtocol": "TCP",
+                        "CidrIp": "0.0.0.0/0"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "AWS::StackName"
+                                    },
+                                    "-ELBSecurityGroup"
+                                ]
+                            ]
+                        }
+                    }
+                ]
             }
         }
     }
