@@ -1,0 +1,368 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Template fait par Alaeddine Zaier : Création de site wordpress - seniorhome'
+Parameters:
+  VPCID:
+    Type: 'AWS::EC2::VPC::Id'
+    Description: Veuillez sélectioner un VPC pour votre site web wordpress
+  ELBSubnet:
+    Type: 'List<AWS::EC2::ELBSubnet::Id>'
+    Description: Veuillez selectionner les subnets pour votre ELB
+  PrivateSubnets:
+    Type: 'List<AWS::EC2::subnets::Id>'
+    Description: >-
+      Veuillez ajouter des subnets privés pour vos instance EC2 ainsi que votre
+      DB
+  InstanceType:
+    Type: String
+    Description: Veuillez choisir un type de instances pour votre machines EC2
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+    ConstraintDescription: Un correct type de instance EC2 est obligatoire
+  SSHLocation:
+    Type: String
+    Description: Veuillez rentrer la plage des adresses IP qui peuvent se connecter
+    MinLength: '9'
+    MaxLength: '18'
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: L'adresse IP doit etre au format x.x.x.x/x
+  DBClass:
+    Description: Veuillez choisir le type d'instance de votre DB
+    Type: String
+    Default: db.t2.micro
+    AllowedValues:
+      - db.t2.micro
+    ConstraintDescription: Le type d'instance doit etre un type valide
+  DBName:
+    Description: Veuillez saisir le nom de la base de donées
+    Type: String
+    Default: wordpressdb
+    MinLength: '1'
+    MaxLength: '64'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Le DBName doit commencer par une lettre et etre du type alphanumérique
+  DBUser:
+    NoEcho: 'true'
+    Description: Veuillez saisir le nom de l'utilisateur de la DB
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Le DBUser doit commencer par une lettre et etre du type alphanumérique
+  DBPassword:
+    NoEcho: 'true'
+    Description: Veuillez saisir un mot de passe pour la base de donées
+    Type: String
+    MinLength: '8'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]*'
+    ConstraintDescription: Le mot de masse doit contenir seulement des caractères alphanupmérics
+  MultiAZDatabase:
+    Default: 'false'
+    Description: Voulez vous choisir l'option MultiAZ pour votre base de données
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    ConstraintDescription: 'doit etre : true or false.'
+  WebServerCapacity:
+    Default: '1'
+    Description: Le nombre initial de web servers
+    Type: Number
+    MinValue: '1'
+    MaxValue: '5'
+    ConstraintDescription: Doit etre entre 1 et 5 innstances
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: must be between 5 and 1024Gb.
+Mappings:
+  AWSInstanceType2Arch:
+    t2.micro:
+      Arch: HVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      HVM64: ami-f5f41398
+    us-west-2:
+      HVM64: ami-d0f506b0
+    us-west-1:
+      HVM64: ami-6e84fa0e
+    eu-west-1:
+      HVM64: ami-b0ac25c3
+    eu-central-1:
+      HVM64: ami-bf2ba8d0
+Resources:
+  ElasticLoadBalancer:
+    Type: 'AWS::ElasticLoadBalancing::LoadBalancer'
+    Properties:
+      Subnets: !Ref ELBSubnet
+      CrossZone: 'True'
+      SecurityGroups: !Ref ELBSecurityGroup
+      LBCookieStickinessPolicy:
+        - PolicyName: CookieBasedPolicy
+          CookieExpirationPeriod: '30'
+      Listeners:
+        - LoadBalancerPort: '80'
+          InstancePort: '80'
+          InstanceProtocol: HTTP
+          PolicyNames:
+            - CookieBasedPolicy
+      HealthCheck:
+        HealthyThreshold: '2'
+        Interval: '10'
+        Target: 'HTTP:80/wordpress/wp-admin/install.php'
+        Timeout: '5'
+        UnhealthyThreshold: '5'
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref 'AWS::StackName'
+              - '-ELB'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: d16b4c47-0fa4-445b-b1a4-75e9fc8ee4d1
+  ELBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - FromPort: '80'
+          ToPort: '80'
+          IpProtocol: TCP
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref 'AWS::StackName'
+              - '-ELBSecurityGroup'
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 2e10a257-4e51-49a4-9dc7-01343f195e0e
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable inbound network access access to EC2 instance.
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - ToPort: '80'
+          IpProtocol: tcp
+          SourceSecurityGroupId: !Ref ELBSecurityGroup
+          FromPort: '80'
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref 'AWS::StackName'
+              - EC2SecurityGrp
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: c5a91906-1c2a-4cc3-bf85-6800ab19f869
+  DBEC2SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPCID
+      GroupDescription: Open database for access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          SourceSecurityGroupId: !Ref InstanceSecurityGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: f8d99ed1-b1bc-401b-8703-aadd09d11833
+  DBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      SubnetIds: !Ref PrivateSubnets
+      DBSubnetGroupDescription: RDS DB subnet
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: c87c11dc-a581-44e9-bcce-a7719ced0958
+  DBInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass: !Ref DBClass
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      MultiAZ: !Ref MultiAZDatabase
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups: !Ref DBEC2SecurityGroup
+    Metadata:
+      'AWS::CloudFormation::Designer':
+        id: 97ce5827-2928-4f58-a576-9e10dbe484ae
+  WebServer:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      MinSize: '1'
+      MaxSize: '5'
+      DesiredCapacity: !Ref WebServerCapacity
+      LoadBalancerNames: !Ref ElasticLoadBalancer
+      LaunchConfigurationName: !Ref LaunchConfig
+      VPCZoneIdentifier: !Ref PrivateSubnets
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: '1'
+        MaxBatchSize: '1'
+        PauseTime: PT15M
+        WaitOnResourceSignals: 'true'
+  LaunchConfig:
+    Type: 'AWS::AutoScaling::LaunchConfiguration'
+    Metadata:
+      'AWS::CloudFormation::Init':
+        configSets:
+          wordpress_install:
+            - install_cfn
+            - install_wordpress
+        install_cfn:
+          files:
+            /etc/cfn/cfn-hup.conf:
+              content: !Join 
+                - ''
+                - - |
+                    [main]
+                  - stack=
+                  - !Ref 'AWS::StackId'
+                  - |+
+
+                  - region=
+                  - !Ref 'AWS::Region'
+                  - |+
+
+              mode: '000400'
+              owner: root
+              group: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Join 
+                - ''
+                - - |
+                    [cfn-auto-reloader-hook]
+                  - |
+                    triggers=post.update
+                  - >
+                    path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init
+                  - 'action=/opt/aws/bin/cfn-init -v '
+                  - '         --stack '
+                  - !Ref 'AWS::StackName'
+                  - '         --resource LaunchConfig '
+                  - '         --configsets wordpress_install '
+                  - '         --region '
+                  - !Ref 'AWS::Region'
+                  - |+
+
+              mode: '000400'
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+        install_wordpress:
+          packages:
+            yum:
+              php: []
+              php-mysql: []
+              mysql: []
+              httpd: []
+          sources:
+            /var/www/html: 'http://wordpress.org/latest.tar.gz'
+          files:
+            /tmp/create-wp-config:
+              content: !Join 
+                - ''
+                - - |
+                    #!/bin/bash
+                  - >
+                    cp /var/www/html/wordpress/wp-config-sample.php
+                    /var/www/html/wordpress/wp-config.php
+                  - sed -i "s/'database_name_here'/'
+                  - !Ref DBName
+                  - |
+                    '/g" wp-config.php
+                  - sed -i "s/'username_here'/'
+                  - !Ref DBUser
+                  - |
+                    '/g" wp-config.php
+                  - sed -i "s/'password_here'/'
+                  - !Ref DBPassword
+                  - |
+                    '/g" wp-config.php
+                  - sed -i "s/'localhost'/'
+                  - !GetAtt 
+                    - DBInstance
+                    - Endpoint.Address
+                  - |
+                    '/g" wp-config.php
+              mode: '000500'
+              owner: root
+              group: root
+          commands:
+            01_configure_wordpress:
+              command: /tmp/create-wp-config
+              cwd: /var/www/html/wordpress
+          services:
+            sysvinit:
+              httpd:
+                enabled: 'true'
+                ensureRunning: 'true'
+    Properties:
+      ImageId: !FindInMap 
+        - AWSRegionArch2AMI
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AWSInstanceType2Arch
+          - !Ref InstanceType
+          - Arch
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #!/bin/bash -xe
+            - |
+              yum update -y aws-cfn-bootstrap
+            - |
+              # Install the files and packages from the metadata
+            - '/opt/aws/bin/cfn-init -v '
+            - '         --stack '
+            - !Ref 'AWS::StackName'
+            - '         --resource LaunchConfig '
+            - '         --configsets wordpress_install '
+            - '         --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+            - |
+              # Signal the status from cfn-init
+            - '/opt/aws/bin/cfn-signal -e $? '
+            - '         --stack '
+            - !Ref 'AWS::StackName'
+            - '         --resource WebServerGroup '
+            - '         --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+Outputs:
+  webSiteURL:
+    Value: !Join 
+      - ''
+      - - 'http://'
+        - !GetAtt 
+          - ElasticLoadBalancer
+          - DNSName
+        - /wordpress
+    Description: Votre site web wordpress
