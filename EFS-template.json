@@ -1,0 +1,271 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Template EFS Service Generique",
+  "Parameters": {
+    "CostCenter": {
+      "Description": "Cost Center",
+      "Type": "String",
+      "Default": "project1",
+      "AllowedValues": [
+        "project1",
+        "project2",
+        "project3",
+        "project4"
+      ]
+    },
+    "Environment": {
+      "Description": "Environment",
+      "Type": "String",
+      "Default": "DEV",
+      "AllowedValues": [
+        "DEV",
+        "PROD",
+        "TEST"
+      ]
+    },
+	"Zone": {
+      "Description": "Zone",
+      "Type": "String",
+      "Default": "1",
+      "AllowedValues": [
+        "1",
+        "2"
+      ]
+    },
+    "Application": {
+      "Description": "Application",
+      "Type": "String",
+	  "Default": "application1",
+	  "AllowedValues": [
+        "application1",
+        "application2",
+        "application3",
+        "application4"
+      ]
+    },
+	 "VPC": {
+      "Type": "AWS::EC2::VPC::Id"
+    },
+    "Subnet1": {
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "Subnet2": {
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "SG1": {
+	  "Description": "Security Groups for the first mount target",
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+    },
+	"SG2": {
+	  "Description": "Security Groups for the first mount target",
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+    },
+
+
+
+    "PerformanceMode": {
+      "Type": "String",
+      "Default": "generalPurpose",
+      "AllowedValues": [
+        "generalPurpose",
+        "maxIO"
+      ]
+    },
+	"Encryption": {
+	"Description": "Enable Encryption",
+	  "Type": "String",
+	  "Default": "false",
+	  "AllowedValues": [
+	    "true",
+		"false"
+      ]
+	}
+  },
+
+    "Resources": {
+    "FileSystem": {
+      "Type": "AWS::EFS::FileSystem",
+      "Properties": {
+        "FileSystemTags": [{
+            "Key": "Cost Center",
+            "Value": {
+              "Ref": "CostCenter"
+            }
+          },
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": ["-", ["efs", {
+                "Ref": "Zone"
+              }, {
+                "Ref": "Environment"
+              },{
+                "Ref": "Application"
+              },"01"
+			  ]]
+            }
+          },
+          {
+            "Key": "Application",
+            "Value": {
+              "Ref": "Application"
+            }
+          }
+        ],
+        "PerformanceMode": {
+              "Ref": "PerformanceMode"
+            },
+		"Encrypted": {
+                "Ref": "Encryption"
+              }
+      }
+    },
+
+
+
+
+    "MountTarget1": {
+      "Type": "AWS::EFS::MountTarget",
+      "DependsOn": [
+        "FileSystem"
+      ],
+      "Properties": {
+        "FileSystemId": {
+              "Ref": "FileSystem"
+            },
+        "SubnetId": {
+              "Ref": "Subnet1"
+            },
+        "SecurityGroups":
+          {  "Ref": "SG1" }
+      }
+    },
+    "MountTarget2": {
+      "Type": "AWS::EFS::MountTarget",
+      "DependsOn": [
+        "FileSystem"
+      ],
+      "Properties": {
+        "FileSystemId": {
+              "Ref": "FileSystem"
+            },
+        "SubnetId":  {
+              "Ref": "Subnet2"
+            },
+        "SecurityGroups":
+          {  "Ref": "SG2" }
+
+      }
+    }
+  },
+
+
+
+
+
+
+  "Outputs": {
+    "Owner": {
+      "Description": "Team or Individual that Owns this Formation.",
+      "Value": "Owner"
+    },
+    "Project": {
+      "Description": "The project name",
+      "Value": "Project"
+    },
+    "VPC": {
+      "Description": "Created VPC",
+      "Value": "VPC"
+    },
+    "Subnet1": {
+      "Description": "Subnet 1",
+      "Value": "Subnet1"
+    },
+    "Subnet2": {
+      "Description": "Subnet 2",
+      "Value": "Subnet2"
+    },
+    "Subnet3": {
+      "Description": "Subnet 3",
+      "Value": "Subnet3"
+    },
+    "FileSystem": {
+      "Description": "FileSystem",
+      "Value": "FileSystem"
+    },
+    "PerformanceMode": {
+      "Description": "PerformanceMode",
+      "Value": "PerformanceMode"
+    },
+    "MountTarget1": {
+      "Description": "MountTarget 1",
+      "Value": "MountTarget1"
+    },
+    "MountTarget2": {
+      "Description": "MountTarget 2",
+      "Value": "MountTarget1"
+    },
+    "MountTarget3": {
+      "Description": "MountTarget 3",
+      "Value": "MountTarget1"
+    }
+  },
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "Ownership"
+          },
+          "Parameters": [
+            "Owner",
+            "Project",
+            "DeleteAfter"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Network Configuration"
+          },
+          "Parameters": [
+            "VPC",
+            "Subnet1",
+            "Subnet2",
+            "Subnet3"
+          ]
+        },
+        {
+          "Label": {
+            "default": "EFS Configuration"
+          },
+          "Parameters": [
+            "PerformanceMode"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "Owner": {
+          "default": "Team or Individual Owner"
+        },
+        "DeleteAfter": {
+          "default": "Delete After Date"
+        },
+        "VPC": {
+          "default": "VPC ID"
+        },
+        "Subnet1": {
+          "default": "Subnet 1"
+        },
+        "Subnet2": {
+          "default": "Subnet 2"
+        },
+        "Subnet3": {
+          "default": "Subnet 3"
+        },
+        "PerformanceMode": {
+          "default": "EFS Performance Mode​"
+        }
+      }
+    }
+  }
+}
